@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Chord recognition training</title>
+  <meta charset="utf-8">
+  <!-- setting IE compatibility mode-->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
+  <script type="text/javascript" data-main="static/init.js" src="http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js"></script>
+  <style>
+    .footer {
+    padding-top: 19px;
+    color: #777;
+    border-top: 1px solid #e5e5e5;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="page-header">
+      <h1>Chord recognition training</h1>
+    </div>
+    <!-- Chord player -->
+    <div class="row"><div class="col-md-12">
+        <p>Inspired by <a href="http://www.justinguitar.com/en/BC-118-JUSTINstage1.php" target="_blank">JUSTIN training</a> exercises on <a href="http://www.justinguitar.com" target="_blank">justinguitar.com</a>.</p>
+        <p>Play a chord or chord sequence, try to guess it, then check your answer.</p>
+        <br/>
+        <audio data-bind="attr: { src: playerSrc }" id="player"></audio>
+        <div class="row">
+          <!-- New chord | Play/Pause combo -->
+          <div class="col-md-4">
+            <div class="btn-group btn-group-lg btn-group-justified">
+              <a role="button" class="btn btn-default btn-lg" data-bind="click: clickGenerate">
+                <span class="glyphicon glyphicon-refresh"></span><span> New chord</span>
+              </a>
+              <a role="button" class="btn btn-default btn-lg" data-bind="click: clickPlayPause">
+                <span data-bind="ifnot: isPlaying"><span class="glyphicon glyphicon-play"></span><span> Play</span></span>
+                <span data-bind="if: isPlaying"><span class="glyphicon glyphicon-pause"></span><span> Pause</span></span>
+              </a>
+            </div>
+          </div>
+          <!-- 'Show chord' button -->
+          <div class="col-md-8">
+            <left>
+              <a type="button" class="btn btn-default btn-lg" data-bind="click: clickReveal">
+                <span class="glyphicon glyphicon-eye-open"></span><span> Show chord: </span><span data-bind="text: (isSequenceVisible() ? sequenceString() : '????')"></span>
+              </a>
+            </left>
+          </div>
+        </div>
+    </div></div>
+    <!-- Progress bar for player -->
+    <div class="row">
+      <div class="col-md-4">
+        <div class="progress" style="height: 5px; margin-top: 10px">
+          <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" data-bind="style: {width: progressPos() + '%'}, attr: { 'aria-valuenow': progressPos() + ''}">
+            <span class="sr-only" data-bind="text: progressPos() + '% Complete'"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row marketing"><div class="col-md-12">
+    <h4 class="page-header">Settings</h4>
+    <form class="form-horizontal" role="form">
+      <!-- Exercise type selector -->
+      <div class="form-group">
+        <label class="col-md-2 control-label">Exercise type</label>
+        <div class="col-md-6">
+          <div class="btn-group" data-toggle="buttons">
+            <label class="btn btn-default" id="type_single_chord_button" data-bind="click: onTypeSingleChordClicked">
+              <input type="radio" name="exercise_type" id="type_single_chord"> Single chord
+            </label>
+            <label class="btn btn-default" data-bind="click: onTypeChordSequenceClicked">
+              <input type="radio" name="exercise_type" id="type_chord_sequence"> Chord sequence
+            </label>
+          </div>
+        </div>
+      </div>
+      <!-- Repetition count selector -->
+      <div class="form-group">
+        <label class="col-md-2 control-label">Repeat each chord</label>
+        <div class="col-md-2">
+          <select class="form-control" data-bind="value: repetitionN, event: {change: onRepetitionN}">
+            <option value="1">1 time</option>
+            <option value="2">2 times</option>
+            <option value="3">3 times</option>
+            <option value="4">4 times</option>
+            <option value="5">5 times</option>
+            <option value="6">6 times</option>
+          </select>
+        </div>
+      </div>
+      <!-- Chord selector -->
+      <div class="form-group">
+        <label class="col-md-2 control-label">Chords</label>
+        <div class="col-md-6">
+          <table class="table">
+            <tbody>
+              <!-- Header row -->
+              <tr>
+                <td style="padding: 0px">
+                  <div class="btn-group btn-group-justified">
+                    <a class="btn btn-default" role="button"
+                       data-bind="css: { active: selectAll() }, click: function(data, event) { $root.toggleSelect(selectAll); }">All</a>
+                    <!-- ko foreach: selectCol -->
+                    <a class="btn btn-default" role="button"
+                       data-bind="css: { active: $root.selectCol[$index()]()}, click: function(data, event) { $root.toggleSelect($root.selectCol[$index()]);}, text: $root.columnNames[$index()]"></a>
+                    <!-- /ko -->
+                  </div>
+              </tr>
+
+              <!-- Main table rows -->
+              <!-- ko foreach: chordTable -->
+              <tr>
+                <td style="padding: 0px">
+                  <div class="btn-group btn-group-justified">
+                    <a class="btn btn-default" role="button"
+                       data-bind="css: { active: $root.selectRow[$index()]()}, click: function(data, event) { $root.toggleSelect($root.selectRow[$index()]); }, text: $root.rowNames[$index()]"></a>
+                    <!-- ko foreach: $data -->
+                    <a class="btn btn-default" role="button"
+                       data-bind="text: name, css: {active: $data && selected()}, click: function(data, event) { if ($data) { $root.toggleSelect($data.selected);} }"></a>
+                    <!-- /ko -->
+                  </div>
+                </td>
+              </tr>
+              <!-- /ko -->
+            </tbody>
+          </table>
+      </div></div>
+    </form>    
+    </div></div>
+    <div class="footer">
+      <p>See source code on Github <a href="https://github.com/ph-ph/chord-practice">https://github.com/ph-ph/chord-practice</a></p>
+    </div>
+  </div>
+</body>
+</html>
